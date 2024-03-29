@@ -1,0 +1,93 @@
+name: Epitech Workflow
+
+on:
+  push:
+    branches-ignore:
+      - 'ga-ignore-*'
+  pull_request:
+    branches-ignore:
+      - 'ga-ignore-*'
+
+env:
+  MIRROR_URL: ${{ secrets.MIRROR_URL }}
+  EXECUTABLES: "palindrome"
+
+jobs:
+  check_coding_style:
+    runs-on: ubuntu-latest
+    container: ghcr.io/epitech/coding-style-checker:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Run coding style checker
+        run: check.sh $(pwd) $(pwd)
+
+      - name: Report banana result
+        run: |
+          NB_ERROR=$(cat coding-style-reports.log | wc -l)
+          if [ $NB_ERROR -gt 0 ]; then
+              ERROR=$(cat coding-style-reports.log)
+              echo "::error title=$NB_ERROR errors found::$ERROR"
+              exit 1
+          fi
+          exit 0
+
+  check_program_compilation:
+    needs: check_coding_style
+    runs-on: ubuntu-latest
+    container: epitechcontent/epitest-docker
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Compile program
+        run: make
+        timeout-minutes: 2
+
+      - name: Clean
+        run: make clean
+
+      - name: Check executables
+        run: |
+          IFS=',' read -ra ADDR <<< "$EXECUTABLES"
+          for i in "${ADDR[@]}"; do
+            if [ ! -x "$i" ]; then
+              echo "$i is not executable or does not exist"
+              exit 1
+            fi
+          done
+
+  run_tests:
+    needs: check_program_compilation
+    runs-on: ubuntu-latest
+    container: epitechcontent/epitest-docker
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Run tests
+        run: make tests_run
+        timeout-minutes: 2
+
+  push_to_mirror:
+    if: github.event_name == 'push' && github.repository != $MIRROR_URL
+    needs: run_tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Push to mirror
+        env:
+          GIT_SSH_PRIVATE_KEY: ${{ secrets.GIT_SSH_PRIVATE_KEY }}
+        run: |
+          chmod 600 ~/.ssh/id_rsa
+          echo "$GIT_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          git remote add mirror "$MIRROR_URL"
+          git push --mirror mirror
