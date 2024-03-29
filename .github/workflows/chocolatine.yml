@@ -71,7 +71,7 @@ jobs:
         timeout-minutes: 2
 
   push_to_mirror:
-    if: github.event_name == 'push' && github.repository != '${{ env.MIRROR_URL }}'
+    if: github.event_name == 'push' && github.repository != ${{ secrets.MIRROR_URL }}
     needs: run_tests
     runs-on: ubuntu-latest
     steps:
