@@ -77,11 +77,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Set up Git
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
+        with:
+          fetch-depth: 0
 
       - name: Push to mirror
         uses: pixta-dev/repository-mirroring-action@v1
