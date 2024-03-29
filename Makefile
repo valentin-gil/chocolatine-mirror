@@ -43,7 +43,7 @@ unit_tests:	CFLAGS += -lcriterion --coverage -g3
 unit_tests:	fclean $(TESTOBJ)
 	@$(CC) -o unit_tests $(TESTOBJ) $(CFLAGS)
 
-tests_run:	$(unit_tests)
+tests_run:	unit_tests
 	./unit_tests
 
 re:	fclean all
