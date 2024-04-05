@@ -61,6 +61,7 @@ jobs:
   run_tests:
     needs: check_program_compilation
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     container: epitechcontent/epitest-docker
     steps:
       - name: Checkout
@@ -68,7 +69,6 @@ jobs:
 
       - name: Run tests
         run: make tests_run
-        timeout-minutes: 2
 
   push_to_mirror:
     if: github.event_name == 'push'
