@@ -16,6 +16,7 @@ int main(int ac, char **av)
     if (ac != 2) {
         return (KO);
     }
+    int i = 0;
     if (format_check(av[1]) == KO) {
         return (KO);
     }
